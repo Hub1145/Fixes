@@ -1,0 +1,287 @@
+{% extends "base.html" %}
+
+{% block title %}Settings - Copy Trading System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">
+            <i class="fas fa-cog me-2"></i>System Settings
+        </h1>
+    </div>
+</div>
+
+<!-- Settings Form -->
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-sliders-h me-2"></i>Configuration
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('update_setting') }}">
+                    <!-- Monitoring Interval -->
+                    <div class="mb-4">
+                        <label for="monitoring_interval" class="form-label">Monitoring Interval (seconds)</label>
+                        <input type="number" class="form-control" id="monitoring_interval" 
+                               name="value" value="5" min="1" max="60">
+                        <input type="hidden" name="key" value="monitoring_interval">
+                        <input type="hidden" name="description" value="How often to check for new trades">
+                        <div class="form-text">How often the system checks for new trades from master accounts</div>
+                        <button type="submit" class="btn btn-primary btn-sm mt-2">Update</button>
+                    </div>
+                </form>
+
+                <form method="POST" action="{{ url_for('update_setting') }}">
+                    <!-- Max Retry Attempts -->
+                    <div class="mb-4">
+                        <label for="max_retries" class="form-label">Max API Retry Attempts</label>
+                        <input type="number" class="form-control" id="max_retries" 
+                               name="value" value="3" min="1" max="10">
+                        <input type="hidden" name="key" value="max_retries">
+                        <input type="hidden" name="description" value="Maximum number of API retry attempts">
+                        <div class="form-text">Maximum number of times to retry failed API calls</div>
+                        <button type="submit" class="btn btn-primary btn-sm mt-2">Update</button>
+                    </div>
+                </form>
+
+                <form method="POST" action="{{ url_for('update_setting') }}">
+                    <!-- Default Capital Allocation -->
+                    <div class="mb-4">
+                        <label for="default_allocation" class="form-label">Default Capital Allocation (%)</label>
+                        <input type="number" class="form-control" id="default_allocation" 
+                               name="value" value="10" min="1" max="100" step="0.1">
+                        <input type="hidden" name="key" value="default_allocation">
+                        <input type="hidden" name="description" value="Default capital allocation for new follower accounts">
+                        <div class="form-text">Default percentage of capital to allocate for new follower accounts</div>
+                        <button type="submit" class="btn btn-primary btn-sm mt-2">Update</button>
+                    </div>
+                </form>
+
+                <form method="POST" action="{{ url_for('update_setting') }}">
+                    <!-- Default Max Leverage -->
+                    <div class="mb-4">
+                        <label for="default_leverage" class="form-label">Default Max Leverage</label>
+                        <input type="number" class="form-control" id="default_leverage" 
+                               name="value" value="10" min="1" max="100">
+                        <input type="hidden" name="key" value="default_leverage">
+                        <input type="hidden" name="description" value="Default maximum leverage for new follower accounts">
+                        <div class="form-text">Default maximum leverage for new follower accounts</div>
+                        <button type="submit" class="btn btn-primary btn-sm mt-2">Update</button>
+                    </div>
+                </form>
+
+                <form method="POST" action="{{ url_for('update_setting') }}">
+                    <!-- Risk Management -->
+                    <div class="mb-4">
+                        <label for="max_daily_trades" class="form-label">Max Daily Trades per Account</label>
+                        <input type="number" class="form-control" id="max_daily_trades" 
+                               name="value" value="50" min="1" max="1000">
+                        <input type="hidden" name="key" value="max_daily_trades">
+                        <input type="hidden" name="description" value="Maximum number of trades per account per day">
+                        <div class="form-text">Maximum number of trades allowed per account per day</div>
+                        <button type="submit" class="btn btn-primary btn-sm mt-2">Update</button>
+                    </div>
+                </form>
+
+                <form method="POST" action="{{ url_for('update_setting') }}">
+                    <!-- Minimum Balance -->
+                    <div class="mb-4">
+                        <label for="min_balance" class="form-label">Minimum Balance (USDT)</label>
+                        <input type="number" class="form-control" id="min_balance" 
+                               name="value" value="10" min="1" step="0.01">
+                        <input type="hidden" name="key" value="min_balance">
+                        <input type="hidden" name="description" value="Minimum balance required to copy trades">
+                        <div class="form-text">Minimum USDT balance required for accounts to copy trades</div>
+                        <button type="submit" class="btn btn-primary btn-sm mt-2">Update</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Current Settings -->
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-list me-2"></i>Current Settings
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if settings %}
+                    {% for setting in settings %}
+                    <div class="mb-3 pb-3 border-bottom">
+                        <h6 class="mb-1">{{ setting.key.replace('_', ' ').title() }}</h6>
+                        <p class="mb-1 text-primary">{{ setting.value }}</p>
+                        <small class="text-muted">{{ setting.description or 'No description' }}</small>
+                        <br>
+                        <small class="text-muted">Updated: {{ setting.updated_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-cog fa-2x text-muted mb-2"></i>
+                        <p class="text-muted">No settings configured yet</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- System Information -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>System Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <h6>Trade Copier Status</h6>
+                    <span id="settings-copier-status" class="badge bg-secondary">Loading...</span>
+                </div>
+                <div class="mb-3">
+                    <h6>Database</h6>
+                    <span class="badge bg-info">PostgreSQL</span>
+                </div>
+                <div class="mb-3">
+                    <h6>API Connections</h6>
+                    <span id="settings-api-status" class="badge bg-secondary">Loading...</span>
+                </div>
+                <div class="mb-3">
+                    <h6>API Provider</h6>
+                    <span class="badge bg-warning text-dark">Bybit</span>
+                </div>
+                <div class="mb-3">
+                    <h6>Version</h6>
+                    <span class="badge bg-secondary">1.0.0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-bolt me-2"></i>Quick Actions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('start_copier') }}" class="btn btn-success">
+                        <i class="fas fa-play me-2"></i>Start Trade Copier
+                    </a>
+                    <a href="{{ url_for('stop_copier') }}" class="btn btn-warning">
+                        <i class="fas fa-pause me-2"></i>Stop Trade Copier
+                    </a>
+                    <button class="btn btn-info" onclick="exportData()">
+                        <i class="fas fa-download me-2"></i>Export Data
+                    </button>
+                    <button class="btn btn-outline-danger" onclick="clearLogs()">
+                        <i class="fas fa-trash me-2"></i>Clear Logs
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Update copier status on settings page
+function updateSettingsCopierStatus() {
+    fetch('/api/copier_status')
+        .then(response => response.json())
+        .then(data => {
+            const statusElement = document.getElementById('settings-copier-status');
+            
+            if (statusElement) {
+                if (data.running) {
+                    statusElement.textContent = 'Running';
+                    statusElement.className = 'badge bg-success';
+                } else {
+                    statusElement.textContent = 'Stopped';
+                    statusElement.className = 'badge bg-danger';
+                }
+            }
+        })
+        .catch(error => {
+            console.log('Copier status update failed:', error);
+            const statusElement = document.getElementById('settings-copier-status');
+            
+            if (statusElement) {
+                statusElement.textContent = 'Error';
+                statusElement.className = 'badge bg-warning';
+            }
+        });
+}
+
+// Update API status on settings page
+function updateSettingsApiStatus() {
+    fetch('/api/connections_status')
+        .then(response => response.json())
+        .then(data => {
+            const statusElement = document.getElementById('settings-api-status');
+            
+            if (statusElement) {
+                switch(data.status) {
+                    case 'all_connected':
+                        statusElement.textContent = `Connected (${data.connected_accounts}/${data.total_accounts})`;
+                        statusElement.className = 'badge bg-success';
+                        break;
+                    case 'partial_connected':
+                        statusElement.textContent = `Partial (${data.connected_accounts}/${data.total_accounts})`;
+                        statusElement.className = 'badge bg-warning';
+                        break;
+                    case 'none_connected':
+                        statusElement.textContent = `Disconnected (0/${data.total_accounts})`;
+                        statusElement.className = 'badge bg-danger';
+                        break;
+                    case 'no_accounts':
+                        statusElement.textContent = 'No Accounts';
+                        statusElement.className = 'badge bg-secondary';
+                        break;
+                    case 'error':
+                        statusElement.textContent = 'Error';
+                        statusElement.className = 'badge bg-warning';
+                        break;
+                }
+            }
+        })
+        .catch(error => {
+            console.log('API status update failed:', error);
+            const statusElement = document.getElementById('settings-api-status');
+            
+            if (statusElement) {
+                statusElement.textContent = 'Error';
+                statusElement.className = 'badge bg-warning';
+            }
+        });
+}
+
+// Update status on page load and every 10 seconds
+document.addEventListener('DOMContentLoaded', function() {
+    updateSettingsCopierStatus();
+    updateSettingsApiStatus();
+    setInterval(function() {
+        updateSettingsCopierStatus();
+        updateSettingsApiStatus();
+    }, 10000);
+});
+
+function exportData() {
+    alert('Export functionality would be implemented here');
+    // This would typically generate and download a CSV/JSON file with trade data
+}
+
+function clearLogs() {
+    if (confirm('Are you sure you want to clear all logs? This action cannot be undone.')) {
+        alert('Clear logs functionality would be implemented here');
+        // This would clear the application logs
+    }
+}
+</script>
+{% endblock %}

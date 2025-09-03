@@ -1,0 +1,314 @@
+{% extends "base.html" %}
+
+{% block title %}Accounts - Copy Trading System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">
+            <i class="fas fa-users me-2"></i>Account Management
+        </h1>
+    </div>
+</div>
+
+<!-- Master Accounts -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-user-crown me-2"></i>Master Accounts
+                </h5>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addMasterModal">
+                    <i class="fas fa-plus me-1"></i>Add Master Account
+                </button>
+            </div>
+            <div class="card-body">
+                {% if master_accounts %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>API Key</th>
+                                    <th>Status</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for account in master_accounts %}
+                                <tr>
+                                    <td>{{ account.name }}</td>
+                                    <td>
+                                        <code>{{ account.api_key[:10] }}...</code>
+                                        <button class="btn btn-sm btn-outline-secondary ms-2" 
+                                                onclick="checkBalance('master', {{ account.id }})">
+                                            <i class="fas fa-wallet"></i>
+                                        </button>
+                                    </td>
+                                    <td>
+                                        <span class="badge {% if account.is_active %}bg-success{% else %}bg-secondary{% endif %}">
+                                            {% if account.is_active %}Active{% else %}Inactive{% endif %}
+                                        </span>
+                                    </td>
+                                    <td>{{ account.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td>
+                                        <a href="{{ url_for('toggle_account', account_type='master', account_id=account.id) }}" 
+                                           class="btn btn-sm {% if account.is_active %}btn-warning{% else %}btn-success{% endif %}">
+                                            {% if account.is_active %}
+                                                <i class="fas fa-pause"></i>
+                                            {% else %}
+                                                <i class="fas fa-play"></i>
+                                            {% endif %}
+                                        </a>
+                                        <a href="{{ url_for('delete_account', account_type='master', account_id=account.id) }}" 
+                                           class="btn btn-sm btn-danger"
+                                           onclick="return confirm('Are you sure?')">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-user-crown fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No master accounts</h5>
+                        <p class="text-muted">Add a master account to start copying trades.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Follower Accounts -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-users me-2"></i>Follower Accounts
+                </h5>
+                <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addFollowerModal">
+                    <i class="fas fa-plus me-1"></i>Add Follower Account
+                </button>
+            </div>
+            <div class="card-body">
+                {% if follower_accounts %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>API Key</th>
+                                    <th>Capital Allocation</th>
+                                    <th>Max Leverage</th>
+                                    <th>Status</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for account in follower_accounts %}
+                                <tr>
+                                    <td>{{ account.name }}</td>
+                                    <td>
+                                        <code>{{ account.api_key[:10] }}...</code>
+                                        <button class="btn btn-sm btn-outline-secondary ms-2" 
+                                                onclick="checkBalance('follower', {{ account.id }})">
+                                            <i class="fas fa-wallet"></i>
+                                        </button>
+                                    </td>
+                                    <td>{{ account.capital_allocation_percent }}%</td>
+                                    <td>{{ account.max_leverage }}x</td>
+                                    <td>
+                                        <span class="badge {% if account.is_active %}bg-success{% else %}bg-secondary{% endif %}">
+                                            {% if account.is_active %}Active{% else %}Inactive{% endif %}
+                                        </span>
+                                    </td>
+                                    <td>{{ account.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td>
+                                        <a href="{{ url_for('toggle_account', account_type='follower', account_id=account.id) }}" 
+                                           class="btn btn-sm {% if account.is_active %}btn-warning{% else %}btn-success{% endif %}">
+                                            {% if account.is_active %}
+                                                <i class="fas fa-pause"></i>
+                                            {% else %}
+                                                <i class="fas fa-play"></i>
+                                            {% endif %}
+                                        </a>
+                                        <a href="{{ url_for('delete_account', account_type='follower', account_id=account.id) }}" 
+                                           class="btn btn-sm btn-danger"
+                                           onclick="return confirm('Are you sure?')">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No follower accounts</h5>
+                        <p class="text-muted">Add follower accounts to copy trades to.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Master Account Modal -->
+<div class="modal fade" id="addMasterModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add Master Account</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('add_master') }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="masterName" class="form-label">Account Name</label>
+                        <input type="text" class="form-control" id="masterName" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="masterApiKey" class="form-label">API Key</label>
+                        <input type="text" class="form-control" id="masterApiKey" name="api_key" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="masterApiSecret" class="form-label">API Secret</label>
+                        <input type="password" class="form-control" id="masterApiSecret" name="api_secret" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Account</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Add Follower Account Modal -->
+<div class="modal fade" id="addFollowerModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add Follower Account</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('add_follower') }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="followerName" class="form-label">Account Name</label>
+                        <input type="text" class="form-control" id="followerName" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="followerApiKey" class="form-label">API Key</label>
+                        <input type="text" class="form-control" id="followerApiKey" name="api_key" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="followerApiSecret" class="form-label">API Secret</label>
+                        <input type="password" class="form-control" id="followerApiSecret" name="api_secret" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="capitalAllocation" class="form-label">Capital Allocation (%)</label>
+                        <input type="number" class="form-control" id="capitalAllocation" name="capital_allocation" 
+                               value="10" min="1" max="100" step="0.1" required>
+                        <div class="form-text">Percentage of total balance to use per trade</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="maxLeverage" class="form-label">Maximum Leverage</label>
+                        <input type="number" class="form-control" id="maxLeverage" name="max_leverage" 
+                               value="10" min="1" max="100" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">Add Account</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Balance Modal -->
+<div class="modal fade" id="balanceModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Account Balance</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="balanceContent">
+                    <div class="text-center">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function checkBalance(accountType, accountId) {
+    const modal = new bootstrap.Modal(document.getElementById('balanceModal'));
+    const content = document.getElementById('balanceContent');
+    
+    // Show loading
+    content.innerHTML = `
+        <div class="text-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2">Fetching balance...</p>
+        </div>
+    `;
+    
+    modal.show();
+    
+    // Fetch balance
+    fetch(`/api/account_balance/${accountType}/${accountId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                content.innerHTML = `
+                    <div class="text-center">
+                        <i class="fas fa-wallet fa-3x text-success mb-3"></i>
+                        <h4>$${data.balance.toFixed(2)} USDT</h4>
+                        <p class="text-muted">Available Balance</p>
+                    </div>
+                `;
+            } else {
+                content.innerHTML = `
+                    <div class="text-center">
+                        <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+                        <h5>Error</h5>
+                        <p class="text-muted">${data.error}</p>
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            content.innerHTML = `
+                <div class="text-center">
+                    <i class="fas fa-exclamation-triangle fa-3x text-danger mb-3"></i>
+                    <h5>Connection Error</h5>
+                    <p class="text-muted">Failed to fetch balance</p>
+                </div>
+            `;
+        });
+}
+</script>
+{% endblock %}

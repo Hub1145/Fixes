@@ -1,0 +1,256 @@
+{% extends "base.html" %}
+
+{% block title %}Trades - Copy Trading System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">
+            <i class="fas fa-chart-line me-2"></i>Trade History
+        </h1>
+    </div>
+</div>
+
+<!-- Trade Filters -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <form method="GET" class="row g-3">
+                    <div class="col-md-3">
+                        <label for="symbol" class="form-label">Symbol</label>
+                        <input type="text" class="form-control" id="symbol" name="symbol" 
+                               value="{{ request.args.get('symbol', '') }}" placeholder="e.g., BTCUSDT">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="status" class="form-label">Status</label>
+                        <select class="form-select" id="status" name="status">
+                            <option value="">All Statuses</option>
+                            <option value="pending" {% if request.args.get('status') == 'pending' %}selected{% endif %}>Pending</option>
+                            <option value="executed" {% if request.args.get('status') == 'executed' %}selected{% endif %}>Executed</option>
+                            <option value="failed" {% if request.args.get('status') == 'failed' %}selected{% endif %}>Failed</option>
+                            <option value="cancelled" {% if request.args.get('status') == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="date_from" class="form-label">From Date</label>
+                        <input type="date" class="form-control" id="date_from" name="date_from" 
+                               value="{{ request.args.get('date_from', '') }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="date_to" class="form-label">To Date</label>
+                        <input type="date" class="form-control" id="date_to" name="date_to" 
+                               value="{{ request.args.get('date_to', '') }}">
+                    </div>
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-filter me-1"></i>Filter
+                        </button>
+                        <a href="{{ url_for('trades') }}" class="btn btn-secondary ms-2">
+                            <i class="fas fa-times me-1"></i>Clear
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Trades Table -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-list me-2"></i>All Trades
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if trades.items %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Date/Time</th>
+                                    <th>Symbol</th>
+                                    <th>Side</th>
+                                    <th>Type</th>
+                                    <th>Quantity</th>
+                                    <th>Price</th>
+                                    <th>Leverage</th>
+                                    <th>Status</th>
+                                    <th>Copies</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for trade in trades.items %}
+                                <tr>
+                                    <td>
+                                        <a href="{{ url_for('trade_detail', trade_id=trade.id) }}" 
+                                           class="text-decoration-none">
+                                            #{{ trade.id }}
+                                        </a>
+                                    </td>
+                                    <td>{{ trade.created_at.strftime('%m/%d %H:%M:%S') }}</td>
+                                    <td>
+                                        <span class="badge bg-secondary">{{ trade.symbol }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge {% if trade.side == 'Buy' %}bg-success{% else %}bg-danger{% endif %}">
+                                            {{ trade.side }}
+                                        </span>
+                                    </td>
+                                    <td>{{ trade.order_type }}</td>
+                                    <td>{{ "%.4f"|format(trade.quantity) }}</td>
+                                    <td>
+                                        {% if trade.price %}
+                                            ${{ "%.2f"|format(trade.price) }}
+                                        {% else %}
+                                            Market
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ trade.leverage or 1 }}x</td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if trade.status == 'executed' %}bg-success
+                                            {% elif trade.status == 'pending' %}bg-warning
+                                            {% elif trade.status == 'failed' %}bg-danger
+                                            {% else %}bg-secondary{% endif %}">
+                                            {{ trade.status.title() }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info">
+                                            {{ trade.copied_trades|length }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{{ url_for('trade_detail', trade_id=trade.id) }}" 
+                                               class="btn btn-outline-primary">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            {% if trade.status in ['pending', 'executed'] %}
+                                                <button class="btn btn-outline-warning" 
+                                                        onclick="showModifyModal({{ trade.id }}, '{{ trade.symbol }}', {{ trade.price or 'null' }}, {{ trade.stop_loss or 'null' }}, {{ trade.take_profit or 'null' }})">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <a href="{{ url_for('cancel_order', trade_id=trade.id) }}" 
+                                                   class="btn btn-outline-danger"
+                                                   onclick="return confirm('Are you sure you want to cancel this order?')">
+                                                    <i class="fas fa-times"></i>
+                                                </a>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Pagination -->
+                    <nav aria-label="Trade pagination">
+                        <ul class="pagination justify-content-center">
+                            {% if trades.has_prev %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('trades', page=trades.prev_num) }}">Previous</a>
+                                </li>
+                            {% endif %}
+                            
+                            {% for page_num in trades.iter_pages() %}
+                                {% if page_num %}
+                                    {% if page_num != trades.page %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="{{ url_for('trades', page=page_num) }}">{{ page_num }}</a>
+                                        </li>
+                                    {% else %}
+                                        <li class="page-item active">
+                                            <span class="page-link">{{ page_num }}</span>
+                                        </li>
+                                    {% endif %}
+                                {% else %}
+                                    <li class="page-item disabled">
+                                        <span class="page-link">...</span>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if trades.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('trades', page=trades.next_num) }}">Next</a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No trades found</h5>
+                        <p class="text-muted">Trades will appear here when the system starts copying.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modify Order Modal -->
+<div class="modal fade" id="modifyOrderModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Modify Order</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="modifyOrderForm" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="modifySymbol" class="form-label">Symbol</label>
+                        <input type="text" class="form-control" id="modifySymbol" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="modifyPrice" class="form-label">Price</label>
+                        <input type="number" class="form-control" id="modifyPrice" name="price" step="0.01">
+                        <div class="form-text">Leave empty for market orders</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="modifyStopLoss" class="form-label">Stop Loss</label>
+                        <input type="number" class="form-control" id="modifyStopLoss" name="stop_loss" step="0.01">
+                    </div>
+                    <div class="mb-3">
+                        <label for="modifyTakeProfit" class="form-label">Take Profit</label>
+                        <input type="number" class="form-control" id="modifyTakeProfit" name="take_profit" step="0.01">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning">Modify Order</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function showModifyModal(tradeId, symbol, price, stopLoss, takeProfit) {
+    const modal = new bootstrap.Modal(document.getElementById('modifyOrderModal'));
+    const form = document.getElementById('modifyOrderForm');
+    
+    // Set form action
+    form.action = `/modify_order/${tradeId}`;
+    
+    // Fill in current values
+    document.getElementById('modifySymbol').value = symbol;
+    document.getElementById('modifyPrice').value = price || '';
+    document.getElementById('modifyStopLoss').value = stopLoss || '';
+    document.getElementById('modifyTakeProfit').value = takeProfit || '';
+    
+    modal.show();
+}
+</script>
+{% endblock %}
